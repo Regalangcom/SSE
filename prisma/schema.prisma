@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum NotificationPriority {
+  NORMAL
+  HIGHT
+  LOW
+}
+
+enum InboxNotificationType {
+  WELCOME
+  PROMO
+  SYSTEM
+  ACCOUNT
+  REMINDER
+  UPDATE
+  ACHIEVEMENT
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
+model PromoCodeUsage {
+  id          String   @id @default(uuid())
+  userId      String
+  promoCodeId String
+  orderAmount Decimal  @db.Decimal(10, 2)
+  discount    Decimal  @db.Decimal(10, 2)
+  usedAt      DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promoCodeId])
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password      String? // Optional for demo
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  notifications InboxNotification[]
+  promoCodes    PromoCodeUsage[]
+}
+
+model InboxNotification {
+  id         String               @id @default(uuid())
+  userId     String
+  title      String
+  message    String               @db.Text
+  isRead     Boolean              @default(false)
+  priority   NotificationPriority @default(NORMAL)
+  metadata   Json? // Flexible data storage
+  sentViaSSE Boolean              @default(false)
+  readAt     DateTime?
+  createdAt  DateTime             @default(now())
+  expiresAt  DateTime?
+
+  user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inboxNotificationId String
+}
+
+model PromoCode {
+  id             String       @id @default(uuid())
+  code           String       @unique
+  description    String
+  discountType   DiscountType @default(PERCENTAGE)
+  discountValue  Decimal      @db.Decimal(10, 2)
+  minPurchase    Decimal?     @db.Decimal(10, 2)
+  maxDiscount    Decimal?     @db.Decimal(10, 2)
+  isActive       Boolean      @default(true)
+  startDate      DateTime     @default(now())
+  endDate        DateTime
+  maxUses        Int? // null = unlimited
+  maxUsesPerUser Int          @default(1)
+  currentUses    Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  usages PromoCodeUsage[]
+}
+
+model Participant {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  phone       String
+  token       String?   @unique
+  tokenExpiry DateTime?
+  createdAt   DateTime  @default(now())
+}
