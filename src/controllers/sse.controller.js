@@ -79,7 +79,7 @@ import sseModule from '../modules/sse/sse.module.js';
  * SSE Connection endpoint
  */
 const connect = (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user.userId;
   const userEmail = req.user.email;
 
   sseModule.initializeSSEConnection(userId, res, req, {
@@ -124,7 +124,7 @@ const checkUserConnection = (req, res) => {
  */
 const sendTestNotification = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const sent = sseModule.sendNotificationToUser(userId, {
       id: `test-${Date.now()}`,
