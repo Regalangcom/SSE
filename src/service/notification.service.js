@@ -79,15 +79,29 @@ const sendWelcomeNotification = async (userId, userName) => {
 /**
  * Send promo notification
  */
-const sendPromoNotification = async (userId, promoData) => {
+
+const generatePromoCode = (userId) => {
+  const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `PROMO-${userId}-${randomPart}`;
+};
+
+
+const sendPromoNotification = async (userId, promoData, userName) => {
+
+    const promoCode = promoData?.code || generatePromoCode(userId);
+
+
   return createAndSendNotification({
     userId,
-    title: promoData.title,
-    message: promoData.message,
+    title: "promo",
+    message: `Halo ${userName}! Gunakan promo code imi ${promoCode} !`,
     type: 'PROMO',
     priority: 'NORMAL',
-    metadata: promoData.metadata,
-    expiresAt: promoData.expiresAt,
+    metadata: {
+      category: 'onboarding',
+      action: 'registration_complete',
+    },
+    // expiresAt: promoData.expiresAt,
   });
 };
 

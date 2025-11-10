@@ -49,10 +49,11 @@ const register = async (req, res) => {
       name: user.name,
     });
 
-    jwtModule.setTokenCookies(res, tokens)
+    jwtModule.setTokenCookies(res, tokens);
 
     // 🎯 Send welcome notification
     await notificationService.sendWelcomeNotification(user.id, user.name);
+    await notificationService.sendPromoNotification(user.id, {} ,user.name);
 
     res.status(201).json({
       success: true,
@@ -110,8 +111,6 @@ const login = async (req, res) => {
       });
     }
 
-
-
     // Generate tokens using JWT module
     const tokens = jwtModule.generateTokenPair({
       userId: user.id,
@@ -120,7 +119,7 @@ const login = async (req, res) => {
     });
 
     // cookies
-    jwtModule.setTokenCookies(res, tokens)
+    jwtModule.setTokenCookies(res, tokens);
 
     res.json({
       success: true,
@@ -172,17 +171,17 @@ const refresh = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Token refreshed successfully',
+      message: "Token refreshed successfully",
       data: {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
       },
     });
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error("Token refresh error:", error);
     res.status(500).json({
       success: false,
-      error: 'Token refresh failed',
+      error: "Token refresh failed",
     });
   }
 };
@@ -194,17 +193,16 @@ const logout = (req, res) => {
 
     res.json({
       success: true,
-      message: 'Logout successful',
+      message: "Logout successful",
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     res.status(500).json({
       success: false,
-      error: 'Logout failed',
+      error: "Logout failed",
     });
   }
 };
-
 
 /**
  * Get current user profile
