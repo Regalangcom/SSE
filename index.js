@@ -1,72 +1,42 @@
-import express from "express";
-import jwt from "jsonwebtoken";
-import bodyParser from "body-parser";
-import { prismaClient } from "./src/config/database.js";
+// require('dotenv').config();
+import dotenv from "dotenv"
+dotenv.config()
+import app from './src/config/app.js';
+import sseModule from './src/modules/sse/sse.module.js';
 
-const app = express();
+const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
-
-app.get("/", (req, res) => {
-  res.send("running");
+const server = app.listen(PORT, () => {
+  console.log(`
+╔═══════════════════════════════════════╗
+║  🚀 Server is running!               ║
+║  📡 Port: ${PORT}                      ║
+║  🌍 Environment: ${process.env.NODE_ENV || 'development'}       ║
+║  ⏰ Started at: ${new Date().toLocaleString()}  ║
+╚═══════════════════════════════════════╝
+  `);
 });
 
-const PORT = 8000;
+// Graceful shutdown
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} signal received: closing HTTP server`);
 
-const SECRET = "@98sdfDs%$sdjsksdjhsjdhjshdjshdjshiey3930429";
-const GROUP_LINK = "https://wa.link/jnjeew";
+  // Cleanup SSE connections
+  sseModule.cleanup();
 
-app.post("/submit", async (req, res) => {
-  try {
-    const { name, email, phone } = req.body;
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
 
-    const participan = await prismaClient.participant.create({
-      data: { name, email, phone },
-    });
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
 
-    /* ======================== */
-    /* create JWT */
-    /* 1 hours */
-    /* ======================== */
-    const token = jwt.sign({ id: participan.id }, SECRET, { expiresIn: "20s" });
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-    await prismaClient.participant.update({
-      where: { id: participan.id },
-      data: { token },
-    });
-
-    const joinLink = `http://localhost:3000/join/${token}`;
-    res.json({ success: true, message: "Pendaftaran berhasil!", joinLink });
-  } catch (error) {
-    res.status(500).json({ success: false });
-  }
-});
-
-
-// Endpoint join group
-app.get("/join/:token", async (req, res) => {
-  const { token } = req.params;
-
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, SECRET);
-
-    // Cross-check token ada di DB (opsional, lebih aman)
-    const participant = await prismaClient.participant.findUnique({
-      where: { id: decoded.id }
-    });
-
-    if (!participant || participant.token !== token) {
-      return res.status(401).send("Link tidak valid.");
-    }
-
-    // Kalau valid → redirect ke WhatsApp group
-    return res.redirect(GROUP_LINK);
-  } catch (err) {
-    return res.status(401).send("Link tidak valid atau sudah expired.");
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`running in server in port ${PORT}`);
-});
+export default server;
