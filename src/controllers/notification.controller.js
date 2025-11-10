@@ -5,7 +5,7 @@ import notificationService from '../service/notification.service.js';
  */
 const getNotifications = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
 
@@ -26,7 +26,7 @@ const getNotifications = async (req, res) => {
  */
 const getUnreadNotifications = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const notifications = await notificationService.getUnreadNotifications(
       userId
     );
@@ -46,7 +46,7 @@ const getUnreadNotifications = async (req, res) => {
  */
 const getUnreadCount = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const count = await notificationService.getUnreadCount(userId);
 
     res.json({ count });
@@ -61,7 +61,7 @@ const getUnreadCount = async (req, res) => {
  */
 const markAsRead = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { id } = req.params;
 
     await notificationService.markAsRead(id, userId);
@@ -78,7 +78,7 @@ const markAsRead = async (req, res) => {
  */
 const markAllAsRead = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     await notificationService.markAllAsRead(userId);
 
@@ -94,7 +94,7 @@ const markAllAsRead = async (req, res) => {
  */
 const deleteNotification = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { id } = req.params;
 
     await notificationService.deleteNotification(id, userId);
