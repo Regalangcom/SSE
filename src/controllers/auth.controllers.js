@@ -3,6 +3,7 @@ import jwtModule from "../modules/jwt/jwt.module.js";
 import notificationService from "../service/notification.service.js";
 
 import { prismaClient } from "../config/database.js";
+import connectionManager from "../modules/sse/sse.manager.js";
 /**
  * Register new user
  */
@@ -53,7 +54,7 @@ const register = async (req, res) => {
 
     // 🎯 Send welcome notification
     await notificationService.sendWelcomeNotification(user.id, user.name);
-    await notificationService.sendPromoNotification(user.id, {} ,user.name);
+    await notificationService.sendPromoNotification(user.id, {}, user.name);
 
     res.status(201).json({
       success: true,
@@ -188,7 +189,15 @@ const refresh = async (req, res) => {
 
 const logout = (req, res) => {
   try {
-    // 🍪 Clear cookies
+    const userId = req.user?.userId;
+
+    if (userId) {
+      const disconnected = connectionManager.removeClient(userId)
+      if (disconnected) {
+        console.log(`[Logout] SSE connection closed for user: ${userId}`);
+      }
+    }
+
     jwtModule.clearTokenCookies(res);
 
     res.json({
